@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册页面</title>
+    <link rel="stylesheet" href="css/login.css">
+
+</head>
+<body>
+
+<div id="app" class="form-group">
+    <form class="register-container">
+        <h1>REGISTER</h1>
+
+        <label for="username">用户名：</label>
+        <input type="text" id="username" v-model="username" required><br><br>
+
+        <label for="password">密码：</label>
+        <input type="password" id="password" v-model="password" required><br><br>
+
+        <label for="checkCode">验证码：</label>
+        <input type="text" id="checkCode" v-model="inputCode" required>
+
+        <span class="code-box" @click="generateRandomCode">{{genCheckCode}}</span>
+        <br><br>
+        <input type="button" class="btn" @click="register" value="注册">
+        <div class="message">{{message}}</div>
+    </form>
+</div>
+
+<script src="js/vue.js"></script>
+<script src="js/axios-0.18.0.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            msg: '请注册',
+            username: '',
+            password: '',
+            genCheckCode: '',
+            message: ''
+        },
+        mounted() {
+            this.generateRandomCode();
+        },
+        methods: {
+            generateRandomCode() {
+                const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; // 验证码字符集
+                let code = ''; // 初始化验证码
+                for (let i = 0; i < 4; i++) { // 生成4位验证码
+                    code += chars.charAt(Math.floor(Math.random() * chars.length)); // 随机选择字符
+                }
+                this.genCheckCode = code; // 返回生成的验证码
+            },
+
+            register: function () {
+                // 验证用户名
+                if (!this.username) {
+                    this.message = '用户名不能为空';
+                    return;
+                }
+                if (this.username.length > 50) {
+                    this.message = '用户名长度不能超过50个字符';
+                    return;
+                }
+                if (!/^[a-zA-Z0-9_]+$/.test(this.username)) {
+                    this.message = '用户名只能包含字母、数字和下划线';
+                    return;
+                }
+
+                // 验证密码
+                if (!this.password) {
+                    this.message = '密码不能为空';
+                    return;
+                }
+                if (this.password.length > 100) {
+                    this.message = '密码长度不能超过100个字符';
+                    return;
+                }
+                if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(this.password)) {
+                    this.message = '密码至少6位，包含字母和数字';
+                    return;
+                }
+
+                // 验证验证码
+                if (!this.inputCode) {
+                    this.message = '验证码不能为空';
+                    return;
+                }
+                if (this.inputCode.toLowerCase() !== this.genCheckCode.toLowerCase()) {
+                    this.message = '验证码错误';
+                    this.generateRandomCode();
+                    return;
+                }
+
+                axios({
+                    method: 'POST',
+                    url: '/qg_bank/registerServlet',
+                    data: {
+                        username: this.username,
+                        password: this.password
+                    }
+                }).then(resp => {
+                    if(resp.data.success){
+                        location.href='/qg_bank/index.html';
+                    }else{
+                        this.message=resp.data.message;
+                    }
+                })
+            }
+        }
+    })
+</script>
+</body>
+</html>

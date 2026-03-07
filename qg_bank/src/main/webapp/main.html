@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>主页面</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+    <h1>￥QG申必小金库￥</h1>
+    <div class="user-info">
+        <span>当前用户：{{user?.username}}</span>
+        <span>余额:￥{{user?.balance}}</span>
+        <span>
+            <i>
+                <input type="button" @click="logout" value="退出登录">
+                <input type="button" @click="openEditModal" value="修改信息">
+            </i>
+        </span>
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="#" @click="switchTab('disposit')">存款</a></li>
+            <li><a href="#" @click="switchTab('withdraw')">取款</a></li>
+            <li><a href="#" @click="switchTab('transfer')">转账</a></li>
+            <li><a href="#" @click="switchTab('records')">交易记录</a></li>
+        </ul>
+    </nav>
+
+    <div v-if="show=='disposit'">
+        <h2>存款</h2>
+        <form>
+            <label>存款金额：<input type="text" v-model="dispositAmount" placeholder="请输入存款金额"></label><br>
+            <button @click="disposit">确认存款</button>
+            <div class="message">{{message}}</div>
+        </form>
+    </div>
+    <div v-else-if="show=='withdraw'">
+        <h2>取款</h2>
+        <form>
+            <label>取款金额：<input type="text" v-model="withdrawAmount" placeholder="请输入取款金额"></label><br>
+            <button @click="withdraw">确认取款</button>
+            <div class="message">{{message}}</div>
+        </form>
+    </div>
+    <div v-else-if="show=='transfer'">
+        <h2>转账</h2>
+        <form>
+            <label>转账金额：<input type="text" v-model="transferAmount" placeholder="请输入转账金额"></label><br>
+            <label>转账用户：<input type="text" v-model="transferTarget" placeholder="请输入转账用户"></label><br>
+            <button @click="transfer">确认转账</button>
+            <div class="message">{{message}}</div>
+        </form>
+    </div>
+    <div v-else-if="show=='records'" id="records">
+        <h2>交易记录</h2>
+        <table>
+            <tr>
+                <th>序号</th>
+                <th>交易时间</th>
+                <th>交易金额</th>
+                <th>目标用户</th>
+                <th>交易类型</th>
+            </tr>
+            <tr v-for="(record,index) in records">
+                <td>{{index + 1}}</td>
+                <td>{{record.createTime}}</td>
+                <td>{{record.amount}}</td>
+                <td>{{record.targetUsername}}</td>
+                <td>{{record.type}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 修改信息弹框 -->
+    <div class="modal-overlay" :class="{ active: showEditModal }">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>修改信息</h3>
+            </div>
+            <div class="modal-body">
+                <label>
+                    <span>用户名：</span>
+                    <input type="text" v-model="editForm.username" placeholder="请输入用户名">
+                </label>
+                <label>
+                    <span>新密码：</span>
+                    <input type="password" v-model="editForm.password" placeholder="不修改请留空">
+                </label>
+                <label>
+                    <span>确认密码：</span>
+                    <input type="password" v-model="editForm.confirmPassword" placeholder="不修改请留空">
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" @click="closeEditModal">取消</button>
+                <button class="btn-submit" @click="submitEdit">确认修改</button>
+            </div>
+            <div class="message" style="color: red; margin-top: 10px; text-align: center;">{{editMessage}}</div>
+        </div>
+    </div>
+</div>
+
+<script src="js/vue.js"></script>
+<script src="js/axios-0.18.0.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            user: {},
+            show: 'disposit',
+            dispositAmount: '',
+            withdrawAmount: '',
+            transferAmount: '',
+            transferTarget: '',
+            records: [],
+            message: '',
+            showEditModal: false,
+            editForm: {
+                username: '',
+                password: '',
+                confirmPassword: ''
+            },
+            editMessage: ''
+        },
+        mounted() {
+            this.getUserInfo();
+            this.getUserRecords();
+        },
+        methods: {
+            switchTab(tab) {
+                this.show = tab;
+                this.message = ''; // 清空message
+            },
+            getUserInfo() {
+                axios({
+                    method: 'get',
+                    url: '/qg_bank/selfInfoServlet'
+                }).then(resp => {
+                    this.user = resp.data;
+                    console.log(resp.data);
+                })
+            },
+            getUserRecords() {
+                axios({
+                    method: 'get',
+                    url: '/qg_bank/transactionRecordServlet'
+                }).then(resp => {
+                    this.records = resp.data;
+                })
+            },
+            disposit(e) {
+                e.preventDefault(); // 阻止表单默认提交
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/dispositServlet',
+                    data: {
+                        dispositAmount: this.dispositAmount
+                    }
+                }).then(resp => {
+                    this.message = resp.data.message;
+                    if (resp.data.success) {
+                        this.getUserInfo();
+                        this.getUserRecords();
+                        this.dispositAmount = '';
+                    }
+                })
+            },
+            withdraw(e) {
+                e.preventDefault(); // 阻止表单默认提交
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/withdrawServlet',
+                    data: {
+                        withdrawAmount: this.withdrawAmount
+                    }
+                }).then(resp => {
+                    this.message = resp.data.message;
+                    if (resp.data.success) {
+                        this.getUserInfo();
+                        this.getUserRecords();
+                        this.withdrawAmount = '';
+                    }
+                })
+            },
+            transfer(e) {
+                e.preventDefault(); // 阻止表单默认提交
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/transferServlet',
+                    data: {
+                        transferAmount: this.transferAmount,
+                        transferTarget: this.transferTarget
+                    }
+                }).then(resp => {
+                    this.message = resp.data.message;
+                    if (resp.data.success) {
+                        this.getUserInfo();
+                        this.getUserRecords();
+                        this.transferAmount = '';
+                    }
+                })
+            },
+            logout() {
+                axios.get('/qg_bank/logoutServlet')
+                    .then(resp => {
+                        if (resp.data.success) {
+                            // 跳转到登录页面
+                            location.href = "index.html";
+                        } else {
+                            alert('退出失败');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('退出请求失败:', error);
+                        alert('网络错误，请稍后重试');
+                    });
+            },
+            // 打开修改信息弹框
+            openEditModal() {
+                this.editForm.username = this.user.username || '';
+                this.editForm.password = '';
+                this.editForm.confirmPassword = '';
+                this.editMessage = '';
+                this.showEditModal = true;
+            },
+            // 关闭修改信息弹框
+            closeEditModal() {
+                this.showEditModal = false;
+                this.editMessage = '';
+            },
+            // 提交修改
+            submitEdit() {
+                // 验证输入
+                if (!this.editForm.username.trim()) {
+                    this.editMessage = '用户名不能为空';
+                    return;
+                }
+                
+                // 如果输入了密码，检查两次密码是否一致
+                if (this.editForm.password || this.editForm.confirmPassword) {
+                    if (this.editForm.password !== this.editForm.confirmPassword) {
+                        this.editMessage = '两次输入的密码不一致';
+                        return;
+                    }
+                }
+                
+                // 发送请求
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/updateUserServlet',
+                    data: {
+                        username: this.editForm.username,
+                        password: this.editForm.password
+                    }
+                }).then(resp => {
+                    if (resp.data.success) {
+                        this.editMessage = '';
+                        this.closeEditModal();
+                        this.getUserInfo();
+                        alert('修改成功');
+                    } else {
+                        this.editMessage = resp.data.message || '修改失败';
+                    }
+                }).catch(error => {
+                    console.error('修改请求失败:', error);
+                    this.editMessage = '网络错误，请稍后重试';
+                });
+            }
+        }
+
+    })
+</script>
+</body>
+</html>

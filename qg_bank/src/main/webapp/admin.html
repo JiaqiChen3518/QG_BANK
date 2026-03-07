@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员yemian</title>
+</head>
+<body>
+<div id="app">
+    <h1>￥QG申必小金库￥</h1>
+    <span>当前用户：{{user?.username}}</span>
+    <span>余额:￥{{user?.balance}}</span>
+    <nav>
+        <ul>
+            <li><a href="#" @click="show='users'">用户管理</a></li>
+            <li><a href="#" @click="show='records'">交易记录管理</a>"/li>
+        </ul>
+    </nav>
+
+    <div v-if="show=='users'">
+        <table>
+            <tr>
+                <th>id</th>
+                <th>用户名</th>
+                <th>余额</th>
+                <th>角色</th>
+            </tr>
+            <tr v-for="user in allUsers">
+                <td>{{user.id}}</td>
+                <td>{{user.username}}</td>
+                <td>{{user.balance}}</td>
+                <td>{{user.role}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div v-if="show=='records'">
+        <table>
+            <tr>
+                <th>用户名</th>
+                <th>交易类型</th>
+                <th>交易对象</th>
+                <th>交易金额</th>
+                <th>交易时间</th>
+            </tr>
+            <tr v-for="record in records">
+                <td>{{record.username}}</td>
+                <td>{{record.type}}</td>
+                <td>{{record.targetUsername}}</td>
+                <td>{{record.amount}}</td>
+                <td>{{record.createTime}}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+
+<script src="js/vue.js"></script>
+<script src="js/axios-0.18.0.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            user: {},
+            allUsers: [],
+            records: [],
+            show: 'users'
+        },
+        mounted() {
+            this.getUserInfo();
+            this.getAllUsers();
+            this.getRecords();
+        },
+        methods: {
+            getUserInfo() {
+                axios.get("/qg_bank/selfInfoServlet").then((res) => {
+                    this.allUsers = res.data;
+                })
+            },
+            getRecords() {
+                axios.get("/qg_bank/transactionRecordServlet").then((res) => {
+                    this.records = res.data;
+                })
+            },
+            getAllUsers() {
+                axios.get("/qg_bank/adminServlet").then((res) => {
+                    this.allUsers = res.data;
+                })
+            }
+        }
+
+    })
+</script>
+</body>
+</html>
