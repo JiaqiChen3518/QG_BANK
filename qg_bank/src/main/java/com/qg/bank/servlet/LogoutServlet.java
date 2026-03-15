@@ -12,8 +12,6 @@ import java.io.IOException;
 public class LogoutServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // 设置响应内容类型和字符编码
-        response.setContentType("application/json;charset=utf-8");
 
         // 销毁会话
         HttpSession session = request.getSession();

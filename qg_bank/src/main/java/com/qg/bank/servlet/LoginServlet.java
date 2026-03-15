@@ -3,20 +3,19 @@ package com.qg.bank.servlet;
 import com.alibaba.fastjson.JSON;
 import com.qg.bank.pojo.Result;
 import com.qg.bank.pojo.User;
+import com.qg.bank.service.UserServiceImpl;
 import com.qg.bank.service.UserService;
-import com.qg.bank.service.UserServiceInterface;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.SQLException;
 
 @WebServlet("/loginServlet")
 public class LoginServlet extends HttpServlet {
 
-    private UserServiceInterface userService = new UserService();
+    private UserService userService = new UserServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -39,29 +38,24 @@ public class LoginServlet extends HttpServlet {
         User user = JSON.parseObject(params, User.class);
 
         // 调用UserService的login方法进行登录验证
-        User loginUser;
-        try {
-            loginUser = userService.login(user.getUsername(), user.getPassword());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        Result result = userService.login(user.getUsername(), user.getPassword());
 
         // 如果登录成功，将用户信息存储到Session中
-        if (loginUser != null) {
+        if (result.isSuccess()) {
+            User loginUser = (User) result.getData();
             HttpSession session = request.getSession();
             session.setAttribute("user", loginUser);
 
-            // 返回响应，包含success字段
-            Result result = new Result(true, loginUser.getRole());
-            response.getWriter().write(JSON.toJSONString(result));
+            // 返回响应，包含success字段和角色信息
+            Result responseResult = new Result(true, loginUser.getRole());
+            response.getWriter().write(JSON.toJSONString(responseResult));
         } else {
-            Result result = new Result(false, "用户名或密码错误");
             response.getWriter().write(JSON.toJSONString(result));
         }
     }
-        @Override
-        protected void doPost (HttpServletRequest request, HttpServletResponse response) throws
-        ServletException, IOException {
-            doGet(request, response);
-        }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doGet(request, response);
     }
+}

@@ -54,31 +54,13 @@
             },
 
             register: function () {
-                // 验证用户名
+                // 前端基础验证（仅做空值检查）
                 if (!this.username) {
                     this.message = '用户名不能为空';
                     return;
                 }
-                if (this.username.length > 50) {
-                    this.message = '用户名长度不能超过50个字符';
-                    return;
-                }
-                if (!/^[a-zA-Z0-9_]+$/.test(this.username)) {
-                    this.message = '用户名只能包含字母、数字和下划线';
-                    return;
-                }
-
-                // 验证密码
                 if (!this.password) {
                     this.message = '密码不能为空';
-                    return;
-                }
-                if (this.password.length > 100) {
-                    this.message = '密码长度不能超过100个字符';
-                    return;
-                }
-                if (!/^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(this.password)) {
-                    this.message = '密码至少6位，包含字母和数字';
                     return;
                 }
 

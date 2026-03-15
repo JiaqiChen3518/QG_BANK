@@ -4,10 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.qg.bank.pojo.Result;
 import com.qg.bank.pojo.User;
+import com.qg.bank.service.TransactionServiceImpl;
 import com.qg.bank.service.TransactionService;
-import com.qg.bank.service.TransactionServiceInterface;
+import com.qg.bank.service.UserServiceImpl;
 import com.qg.bank.service.UserService;
-import com.qg.bank.service.UserServiceInterface;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -15,52 +15,36 @@ import javax.servlet.annotation.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.SQLException;
 
 @WebServlet("/transferServlet")
 public class TransferServlet extends HttpServlet {
 
-    private UserServiceInterface userService = new UserService();
-    private TransactionServiceInterface transactionService = new TransactionService();
+    private UserService userService = new UserServiceImpl();
+    private TransactionService transactionService = new TransactionServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        request.setCharacterEncoding("utf-8");
-        response.setContentType("application/json;charset=utf-8");
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
 
         BufferedReader br = request.getReader();
         String params = br.readLine();
 
-        JSONObject jsonObject = JSON.parseObject(params);
-        BigDecimal transferAmount = jsonObject.getBigDecimal("transferAmount");
-        String transferTarget = jsonObject.getString("transferTarget");
-
-        Integer target_id;
         try {
-            target_id = userService.selectByName(transferTarget);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+            JSONObject jsonObject = JSON.parseObject(params);
+            BigDecimal transferAmount = jsonObject.getBigDecimal("transferAmount");
+            String transferTarget = jsonObject.getString("transferTarget");
 
-        if (target_id == null) {
-            Result result = new Result(false, "目标用户不存在");
+            Result transferResult = transactionService.transfer(user.getId(), transferAmount, transferTarget);
+            if (transferResult.isSuccess()) {
+                // 更新session中的用户余额
+                user.setBalance(user.getBalance().subtract(transferAmount));
+            }
+            response.getWriter().write(JSON.toJSONString(transferResult));
+        } catch (Exception e) {
+            Result result = new Result(false, "输入金额格式错误");
             response.getWriter().write(JSON.toJSONString(result));
-            return;
         }
-
-        HttpSession session = request.getSession();
-        User user =(User) session.getAttribute("user");
-
-        try {
-            transactionService.transfer(user.getId(), transferAmount,target_id );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        Result result = new Result(true, "转账成功");
-        response.getWriter().write(JSON.toJSONString(result));
-
     }
 
     @Override

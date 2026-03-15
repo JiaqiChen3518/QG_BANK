@@ -1,41 +1,21 @@
 package com.qg.bank.service;
 
-import com.qg.bank.dao.UserDao;
-import com.qg.bank.dao.UserDaoInterface;
 import com.qg.bank.pojo.Result;
 import com.qg.bank.pojo.User;
 
-import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.List;
 
-public class UserService implements UserServiceInterface {
+public interface UserService {
 
-    private UserDaoInterface userDao = new UserDao();
+    Result login(String username, String password);
 
-    public User login(String username, String password) throws SQLException {
-        // 调用UserDao的login方法进行登录验证
-        User loginUser = userDao.login(username, password);
-        return loginUser;
-    }
+    Result selectByName(String username);
 
-    public Integer selectByName(String username) throws SQLException {
-        return userDao.selectByName(username);
-    }
+    Result register(String username, String password);
 
-    public void register(String username, String password) throws SQLException {
-        userDao.register(username, password);
-    }
+    Result getAllUsers();
 
-    public List<User> getAllUsers() throws SQLException {
-        return userDao.getAllUsers();
-    }
+    Result selectById(int id);
 
-    public User selectById(int id) throws SQLException {
-        return userDao.selectById(id);
-    }
-
-    public void updateUser(int id, String username, String password) throws SQLException {
-        userDao.updateUser(id, username, password);
-    }
+    Result updateUser(int id, String username, String password, String currentUsername);
 }

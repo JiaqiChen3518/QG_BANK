@@ -25,6 +25,7 @@
             <li><a href="#" @click="switchTab('withdraw')">取款</a></li>
             <li><a href="#" @click="switchTab('transfer')">转账</a></li>
             <li><a href="#" @click="switchTab('records')">交易记录</a></li>
+            <li><a href="#" @click="finantial">理财</a></li>
         </ul>
     </nav>
 
@@ -147,7 +148,11 @@
                     method: 'get',
                     url: '/qg_bank/transactionRecordServlet'
                 }).then(resp => {
-                    this.records = resp.data;
+                    if(resp.data.success){
+                        this.records = resp.data.data;
+                    }else{
+                        this.message=resp.data.message;
+                    }
                 })
             },
             disposit(e) {
@@ -267,6 +272,9 @@
                     console.error('修改请求失败:', error);
                     this.editMessage = '网络错误，请稍后重试';
                 });
+            },
+            finantial(){
+                location.href = "financial.html";
             }
         }
 

@@ -1,53 +1,51 @@
 package com.qg.bank.pojo;
 
 /**
- * 结果类（用于封装操作结果）
+ * 操作结果类，用于封装操作结果和错误信息
  */
 public class Result {
-    private boolean success;
-     private String message;
+    private boolean success;      // 操作是否成功
+    private String message;       // 操作消息
+    private Object data;          // 操作数据
 
-    public Result() {
-    }
-
+    // 构造方法
     public Result(boolean success, String message) {
         this.success = success;
         this.message = message;
     }
 
-    /**
-     * 获取
-     * @return success
-     */
+    public Result(boolean success, String message, Object data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+    }
+
+    // 静态工厂方法
+    public static Result success(String message) {
+        return new Result(true, message);
+    }
+
+    public static Result success(String message, Object data) {
+        return new Result(true, message, data);
+    }
+
+    public static Result fail(String message, String eMessage) {
+        return new Result(false, message, eMessage);
+    }
+    public static Result fail(String message) {
+        return new Result(false, message);
+    }
+
+    // getter方法
     public boolean isSuccess() {
         return success;
     }
 
-    /**
-     * 设置
-     * @param success
-     */
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    /**
-     * 获取
-     * @return message
-     */
     public String getMessage() {
         return message;
     }
 
-    /**
-     * 设置
-     * @param message
-     */
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String toString() {
-        return "Result{success = " + success + ", message = " + message + "}";
+    public Object getData() {
+        return data;
     }
 }
