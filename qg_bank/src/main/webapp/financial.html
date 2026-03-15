@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/style.css">
+    <title>理财页面</title>
+</head>
+<body>
+
+<div id="app">
+    <h1>￥QG申必小金库￥</h1>
+    <div class="user-info">
+        <span>当前用户：{{user?.username}}</span>
+        <span>余额:￥{{user?.balance}}</span>
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="main.html">首页</a></li>
+            <li><a href="#" @click="switchTab('current')">活期理财</a></li>
+            <li><a href="#" @click="switchTab('fixed')">定期理财</a></li>
+            <li><a href="#" @click="switchTab('records')">理财记录</a></li>
+        </ul>
+    </nav>
+
+    <div v-if="show=='current'">
+        <h3>活期理财</h3>
+        <p>年化收益率：1.5%</p>
+        <p>起投金额：1元</p>
+        <p>特点：随时存取，灵活方便</p>
+        <div class="form-group">
+            <label>投资金额</label>
+            <input type="text" v-model="currentAmount" placeholder="请输入投资金额">
+        </div>
+        <button @click="investCurrent" class="btn btn-primary">立即投资</button>
+        <div class="message">{{message}}</div>
+    </div>
+    <div v-else-if="show=='fixed'">
+        <h3>定期理财</h3>
+        <p>年化收益率：2.5%</p>
+        <p>起投金额：1000元</p>
+        <p>期限：3个月</p>
+        <p>特点：收益稳定，适合长期投资</p>
+        <div class="form-group">
+            <label>投资金额</label>
+            <input type="text" v-model="fixedAmount" placeholder="请输入投资金额">
+        </div>
+        <button @click="investFixed" class="btn btn-primary">立即投资</button>
+        <div class="message">{{message}}</div>
+    </div>
+
+    <div v-else-if="show=='records'">
+        <h3>理财记录</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>产品类型</th>
+                    <th>金额</th>
+                    <th>收益率</th>
+                    <th>状态</th>
+                    <th>期限</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="record in records">
+                    <td>{{record.productName}}</td>
+                    <td>{{record.amount}}</td>
+                    <td>{{record.rate*100}}%</td>
+                    <td>{{record.status}}</td>
+                    <td>{{record.term=='0'?'活期':record.term+'个月'}}</td>
+                    <td>{{record.buyTime}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<script src="js/vue.js"></script>
+<script src="js/axios-0.18.0.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            show: 'current',
+            message: '',
+            user: {},
+            records: [],
+            currentAmount: '',
+            fixedAmount: '',
+        },
+        mounted() {
+            this.getUserInfo();
+            this.getRecords();
+        },
+        methods: {
+            getUserInfo() {
+                axios({
+                    method: 'get',
+                    url: '/qg_bank/selfInfoServlet'
+                }).then(resp => {
+                    this.user = resp.data;
+                    console.log(resp.data);
+                })
+            },
+            getRecords() {
+                axios({
+                    method: 'get',
+                    url: '/qg_bank/financialServlet'
+                }).then(resp => {
+                    if(resp.data.success){
+                        this.records = resp.data.data;
+                    }else{
+                        this.message=resp.data.message;
+                    }
+                }).catch(error=>{
+                    console.log('获取理财记录失败'+error);
+                    this.records=[];
+                })
+            },
+            switchTab(tab) {
+                this.show = tab;
+                this.message = '',
+                    console.log('切换到标签:', tab);
+            },
+            investCurrent() {
+                if (!this.currentAmount) {
+                    this.message = '请输入投资金额';
+                    return;
+                }
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/financialServlet',
+                    data: {
+                        productType: 'current',
+                        amount: this.currentAmount
+                    }
+                }).then(resp => {
+                    if (resp.data.success) {
+                        this.message = '活期理财投资成功';
+                        this.getUserInfo();
+                        this.getRecords();
+                        this.currentAmount = '';
+                    } else {
+                        this.message = resp.data.message;
+                    }
+                })
+            },
+            investFixed() {
+                if (!this.fixedAmount) {
+                    this.message = '请输入投资金额';
+                    return;
+                }
+                axios({
+                    method: 'post',
+                    url: '/qg_bank/financialServlet',
+                    data: {
+                        productType: 'fixed',
+                        amount: this.fixedAmount
+                    }
+                }).then(resp => {
+                    if (resp.data.success) {
+                        this.message = '定期理财投资成功';
+                        this.getUserInfo();
+                        this.getRecords();
+                        this.fixedAmount = '';
+                    } else {
+                        this.message = resp.data.message;
+                    }
+                })
+            }
+        }
+    })
+</script>
+</body>
+</html>
